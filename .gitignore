@@ -1,0 +1,9 @@
+# private - never commit
+config.json
+data/
+*.pem
+guardian.log*
+
+.venv/
+__pycache__/
+*.pyc

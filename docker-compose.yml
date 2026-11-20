@@ -1,0 +1,18 @@
+# Linux hosts only - see the comment at the top of Dockerfile.
+#
+#   docker compose up -d --build
+#   docker compose exec guardian python guardian.py --set-password
+#   tailscale serve --bg 8765          # on the host
+services:
+  guardian:
+    build: .
+    image: peek
+    container_name: peek
+    restart: unless-stopped
+    network_mode: host        # see the host's real network traffic; binds 127.0.0.1:8765 on the host
+    pid: host                 # see the host's processes (for watched apps)
+    environment:
+      PCG_DISK_PATH: /host    # report the host's root disk, not the container's
+    volumes:
+      - ./data:/data
+      - /:/host:ro

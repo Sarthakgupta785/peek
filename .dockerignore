@@ -1,0 +1,7 @@
+.venv
+data
+config.json
+*.pem
+guardian.log*
+__pycache__
+.git

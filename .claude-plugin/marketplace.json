@@ -1,0 +1,11 @@
+{
+  "name": "peek",
+  "owner": { "name": "Peek contributors" },
+  "plugins": [
+    {
+      "name": "peek",
+      "source": "./",
+      "description": "Install, update and troubleshoot Peek on Windows, macOS or Linux (Docker)."
+    }
+  ]
+}
