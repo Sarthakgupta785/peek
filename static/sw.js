@@ -1,6 +1,6 @@
 // Peek service worker: shows push notifications and opens the app when tapped.
 
-const SHELL_CACHE = "peek-shell-v1";
+const SHELL_CACHE = "peek-shell-v2";
 const SHELL_FILES = ["/offline", "/welcome", "/static/style.css", "/static/offline.js", "/static/icons/peek.svg",
                      "/static/icons/icon-180.png", "/static/icons/icon-192.png"];
 const SKIP_NOTICE = { "ngrok-skip-browser-warning": "1" };

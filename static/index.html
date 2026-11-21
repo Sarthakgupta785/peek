@@ -191,5 +191,16 @@
   </nav>
 
   <script src="/static/app.js?v=3"></script>
+  <script>
+  // Fallback: if app.js didn't load or the first fetch hangs, show a message after 20s.
+  setTimeout(function() {
+    var s = document.getElementById("subtitle");
+    if (s && s.textContent === "Connecting…") {
+      s.textContent = "Could not reach PC — pull down to refresh";
+      s.style.cursor = "pointer";
+      s.onclick = function() { location.reload(); };
+    }
+  }, 20000);
+  </script>
 </body>
 </html>
