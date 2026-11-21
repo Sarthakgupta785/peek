@@ -6,7 +6,7 @@ few seconds; for a failure typed at the PC itself (logon type 2 = sign-in, 7 = u
 
 Reading the Security log needs the account to be in Windows' "Event Log Readers" group
 (enable-intruder-photos.bat). Until then this module just reports that it's waiting.
-Windows only for now.
+Works on Windows and macOS.
 """
 
 import logging
@@ -296,7 +296,7 @@ def _watch():
 
 # ---------------------------------------------------------------- macOS: failed unlocks from the unified log
 #
-# EXPERIMENTAL - written without a Mac to test on. macOS logs a failed password at the lock/login
+# Confirmed on a real Mac. macOS logs a failed password at the lock/login
 # screen from a few processes; we watch all of them and log the matching line so testers can
 # report exactly what their macOS version prints.
 

@@ -34,7 +34,7 @@ was typed.
 |---|:-:|:-:|:-:|:-:|
 | Stats, charts, watched apps, wake and boot alerts, push | ✅ | ✅ | ✅ | ✅ |
 | Idle detection | ✅ | ✅ | — | — |
-| Camera photo / intruder photos | ✅ | ✅ (intruder photos experimental) | — | — |
+| Camera photo / intruder photos | ✅ | ✅ | — | — |
 | Shut down / restart (with cancel) | ✅ | ✅ | — | — |
 | Secrets encrypted at rest | ✅ DPAPI | ✅ Keychain | — | — |
 | Screenshot | ✅ | ✅ (needs Screen Recording permission) | — | — |

@@ -3,8 +3,8 @@
 Thanks for helping! Peek runs on **your own computer** and lets **you** check on it from **your
 phone**. Nothing you test is sent to the person who invited you — your data stays on your machine.
 
-> **Mac testers:** Peek has been written for macOS but **never run on a Mac before**. Expect a few
-> rough edges — finding them is the whole point. Please report anything odd (see the end).
+> **Beta:** Peek has passed install tests on Windows and macOS, but different setups can still show a few
+> rough edges. Please report anything odd (see the end).
 
 ## 1. Install (about 15 minutes)
 
@@ -53,7 +53,7 @@ Needs Python 3.10+ (`brew install python` or python.org) and ngrok (`brew instal
 | 4 | Actions → Take screenshot | Your screen (Mac: allow Screen Recording first) |
 | 5 | Actions → Take camera photo | Webcam photo (Mac: allow Camera); try again during a FaceTime/Zoom call |
 | 6 | Lock the computer, then Overview + Take screenshot | "PC is locked"; you get a camera photo instead |
-| 7 | **(Mac, experimental)** lock the Mac, type a **wrong** password on the lock screen | Phone alert + "Intruder photos" in Actions |
+| 7 | Lock the computer, type a **wrong** password on the lock screen (Windows: run `enable-intruder-photos.bat` first) | Phone alert + "Intruder photos" in Actions |
 | 8 | Actions → Restart PC → then **Cancel** within 30 s | Countdown on the computer, cancel works, nothing restarts |
 | 9 | Sleep the computer for a few minutes, wake it | "PC woke up, asleep for X" alert |
 | 10 | Shut down and start again | "PC turned on" + how it was last shut down |
@@ -68,7 +68,7 @@ Send the invite-er:
 - the last ~50 lines of `guardian.log` in the Peek folder — **check it first** and remove anything
   you consider private (it contains app names, times and IP addresses, never passwords).
 
-**Mac test 7 especially:** in `guardian.log`, lines containing `Mac auth-failure log line` show what
+**If Mac test 7 fails:** in `guardian.log`, lines containing `Mac auth-failure log line` show what
 your macOS printed — please include them even if no alert arrived.
 
 ## 5. Getting an update
