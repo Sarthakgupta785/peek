@@ -9,11 +9,17 @@ peekFont.href = "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600
 document.head.append(peekFont);
 
 async function api(path, opts = {}) {
-  const res = await fetch(path, {
-    credentials: "same-origin",
-    ...opts,
-    headers: opts.body ? { "Content-Type": "application/json", ...(opts.headers || {}) } : opts.headers,
-  });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  let res;
+  try {
+    res = await fetch(path, {
+      credentials: "same-origin",
+      signal: ctrl.signal,
+      ...opts,
+      headers: opts.body ? { "Content-Type": "application/json", ...(opts.headers || {}) } : opts.headers,
+    });
+  } finally { clearTimeout(timer); }
   if (["ERR_NGROK_3200", "ERR_NGROK_3004", "ERR_NGROK_8012"].includes(res.headers.get("ngrok-error-code"))) {
     location.replace("/offline");
     throw new Error("PC offline");
@@ -115,7 +121,10 @@ async function recoverIfSignedOut(err) {
 
 async function loadOverview() {
   let o;
-  try { o = await getJSON("/api/overview"); } catch (e) { $("subtitle").textContent = "PC not reachable"; recoverIfSignedOut(e); return; }
+  try { o = await getJSON("/api/overview"); } catch (e) {
+    $("subtitle").textContent = e.name === "AbortError" ? "Connection timed out — retrying…" : "PC not reachable";
+    recoverIfSignedOut(e); return;
+  }
   try { localStorage.setItem("peek-last-seen", String(Date.now())); } catch { /* optional */ }
   applyFeatures(o);
   $("hostname").textContent = o.hostname;
