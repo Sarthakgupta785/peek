@@ -57,7 +57,8 @@ def find_exe(cfg=None):
 
 # Paths anyone may load without Google sign-in: harmless files and the two pages Google's
 # sign-in screen links to. Nothing here shows anything about the PC.
-PUBLIC_PATHS = ["/about", "/privacy", "/manifest.webmanifest", "/static/style.css"]
+PUBLIC_PATHS = ["/about", "/privacy", "/offline", "/sw.js", "/manifest.webmanifest", "/static/style.css",
+                "/static/offline.js"]
 PUBLIC_PREFIXES = ["/static/icons/"]
 
 

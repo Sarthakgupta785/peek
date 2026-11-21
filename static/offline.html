@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B1120">
+  <title>Peek · Offline</title>
+  <link rel="icon" type="image/svg+xml" href="/static/icons/peek.svg">
+  <link rel="apple-touch-icon" href="/static/icons/icon-180.png">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="auth">
+  <main class="login-wrap">
+    <div class="login">
+      <div class="brand">
+        <div class="brand-tile"><img src="/static/icons/peek.svg" alt=""></div>
+        <h1 class="wordmark">peek</h1>
+        <p class="tagline">Your PC, at a glance.</p>
+      </div>
+
+      <section class="login-card offline-card" aria-live="polite">
+        <div class="offline-state"><span class="offline-dot" aria-hidden="true"></span><strong id="offline-title">Your PC is offline</strong></div>
+        <p class="hint" id="offline-seen">Peek can't reach it right now.</p>
+        <ul class="offline-list">
+          <li>It may be off, asleep, or not signed in</li>
+          <li>Its internet may be down</li>
+          <li>Peek may be turned off or in exam mode</li>
+        </ul>
+        <button class="btn primary block" id="offline-retry" type="button">Try again</button>
+        <p class="hint offline-auto" id="offline-status">Checking automatically…</p>
+      </section>
+    </div>
+  </main>
+  <script src="/static/offline.js"></script>
+</body>
+</html>

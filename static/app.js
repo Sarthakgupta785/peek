@@ -8,6 +8,10 @@ async function api(path, opts = {}) {
     ...opts,
     headers: opts.body ? { "Content-Type": "application/json", ...(opts.headers || {}) } : opts.headers,
   });
+  if (["ERR_NGROK_3200", "ERR_NGROK_3004", "ERR_NGROK_8012"].includes(res.headers.get("ngrok-error-code"))) {
+    location.replace("/offline");
+    throw new Error("PC offline");
+  }
   if (res.status === 401) {
     location.replace("/login");
     throw new Error("not logged in");
@@ -93,6 +97,7 @@ document.addEventListener("visibilitychange", () => {
 async function loadOverview() {
   let o;
   try { o = await getJSON("/api/overview"); } catch (e) { $("subtitle").textContent = "PC not reachable"; return; }
+  try { localStorage.setItem("peek-last-seen", String(Date.now())); } catch { /* optional */ }
   $("hostname").textContent = o.hostname;
   $("subtitle").textContent = `Up for ${dur(o.uptime)} · since ${new Date(o.boot * 1000).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })}`;
   document.title = `${o.hostname} · Peek`;

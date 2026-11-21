@@ -32,6 +32,7 @@ async def security_headers(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Peek"] = "1"          # lets the app tell Peek apart from ngrok's own pages
     if request.url.path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-store"
     elif request.url.path.startswith("/static/"):
@@ -136,6 +137,12 @@ def about_page():
 def privacy_page():
     """Public: Google's sign-in screen links here as the app's privacy policy."""
     return _page("privacy.html")
+
+
+@app.get("/offline")
+def offline_page():
+    """Public: Peek's own screen, saved on the phone for when the PC can't be reached."""
+    return _page("offline.html")
 
 
 @app.get("/favicon.ico")
