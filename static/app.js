@@ -631,7 +631,7 @@ const standalone = matchMedia("(display-mode: standalone)").matches || navigator
 
 async function pushRegistration() {
   if (!("serviceWorker" in navigator)) return null;
-  return navigator.serviceWorker.register("/sw.js");
+  return navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
 }
 
 async function refreshPush() {
@@ -699,6 +699,16 @@ $("logout-all").addEventListener("click", async () => {
   if (!confirm("Log out every phone and browser, including this one?")) return;
   await postJSON("/api/logout-all");
   location.replace("/login");
+});
+
+$("clear-cache").addEventListener("click", async () => {
+  const names = await caches.keys();
+  await Promise.all(names.map((n) => caches.delete(n)));
+  if ("serviceWorker" in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map((r) => r.unregister()));
+  }
+  location.reload();
 });
 
 async function loadSettings() {

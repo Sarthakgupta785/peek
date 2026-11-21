@@ -70,12 +70,12 @@ async def security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["X-Peek"] = "1"          # lets the app tell Peek apart from ngrok's own pages
-    if request.url.path.startswith("/api/"):
+    if request.url.path.startswith("/api/") or request.url.path == "/static/sw.js":
         response.headers["Cache-Control"] = "no-store"
     elif request.url.path.startswith("/static/"):
-        # Always re-check with the PC (unchanged files just answer "304 Not Modified"),
-        # so phones never keep running an old app.js after an update.
         response.headers["Cache-Control"] = "no-cache"
+    else:
+        response.headers["Cache-Control"] = "no-store"
     return response
 
 
@@ -144,6 +144,11 @@ def require_session(request: Request):
 
 def _page(name):
     return FileResponse(config.STATIC_DIR / name, headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/ngrok/callback/error")
+def ngrok_oauth_error():
+    return RedirectResponse("/", status_code=303)
 
 
 @app.get("/")

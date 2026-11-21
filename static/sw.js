@@ -1,6 +1,6 @@
 // Peek service worker: shows push notifications and opens the app when tapped.
 
-const SHELL_CACHE = "peek-shell-v2";
+const SHELL_CACHE = "peek-shell-v3";
 const SHELL_FILES = ["/offline", "/welcome", "/static/style.css", "/static/offline.js", "/static/icons/peek.svg",
                      "/static/icons/icon-180.png", "/static/icons/icon-192.png"];
 const SKIP_NOTICE = { "ngrok-skip-browser-warning": "1" };
@@ -20,6 +20,9 @@ async function cacheShell() {
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(cacheShell());
+});
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 self.addEventListener("activate", (event) => event.waitUntil((async () => {
   for (const name of await caches.keys()) {
@@ -61,7 +64,7 @@ async function openPage(request) {
   let res;
   try {
     // Signed-in visits skip ngrok's "You are about to visit" notice.
-    res = await fetch(request.url, { headers: SKIP_NOTICE, credentials: "include", redirect: "manual" });
+    res = await fetch(request.url, { headers: SKIP_NOTICE, credentials: "include", redirect: "manual", cache: "no-store" });
   } catch {
     return offlinePage();
   }
