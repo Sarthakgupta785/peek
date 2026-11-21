@@ -22,6 +22,21 @@ shell that fits the OS (PowerShell on Windows, bash on macOS/Linux).
   the project folder, plus one start-at-login entry for the current user.
 - If other people use this computer, remind the user once that they should be told it's monitored.
 
+## How to guide the user
+
+Assume the user is a complete beginner. The full human guide is `INSTALL.md`.
+
+- Detect the operating system and what's already installed yourself. Don't ask what you can check.
+- Start with a short roadmap: about 20 minutes, what they need (Google, ngrok, an authenticator
+  app), and what you will do for them.
+- Do everything you safely can. When only the user can act, give **one step at a time**: what to open,
+  what to click or paste, and what they should see. Then stop and wait for them to say it's done.
+- Use plain language and exact links. Explain a technical word the first time, or avoid it.
+- Open a separate terminal for steps that ask for secrets, and don't read its output.
+- After each step, verify it yourself where possible. If it failed, fix it before moving on.
+- Finish with a short checklist of what's working, the user's phone link, and how to pause Peek before
+  an online exam. Say plainly if anything was skipped or could not be verified.
+
 ## 1. Get the code
 
 - If the current folder already contains `guardian.py` and `pcguardian/`, use it.

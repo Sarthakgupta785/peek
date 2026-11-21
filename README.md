@@ -10,7 +10,8 @@ turns on, wakes up, or when someone opens WhatsApp, or types the wrong dashboard
 
 > If other people use this computer, tell them it's monitored.
 
-> **Beta testers:** start with [TESTING.md](TESTING.md).
+> **New here?** Follow the easy [install guide](INSTALL.md).
+> **Beta testers:** after installing, use [TESTING.md](TESTING.md).
 > **Claude Code / AI assistants installing this:** follow [skills/install-peek/SKILL.md](skills/install-peek/SKILL.md).
 
 ## What it does (v1)
