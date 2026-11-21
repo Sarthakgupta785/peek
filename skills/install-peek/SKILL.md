@@ -1,31 +1,35 @@
 ---
 name: install-peek
-description: Install, update, check or uninstall Peek (self-hosted dashboard + phone alerts for a Windows/Mac/Linux computer, reached through Tailscale). Use when the user says "install Peek", "install <github link to pc-guardian>", "set up Peek", "update Peek", "Peek isn't working", or "uninstall Peek".
+description: Install, update, troubleshoot or uninstall Peek, a free self-hosted dashboard with phone alerts for a Windows, Mac or Linux computer, reached through ngrok or Tailscale. Use when the user says "install Peek", "install https://github.com/Sarthakgupta785/peek", "set up Peek", "update Peek", "Peek isn't working", or "uninstall Peek".
 ---
 
 # Install Peek
 
 Peek runs on the user's own computer, records system stats and events in a local SQLite file,
-and serves a password-protected dashboard on `127.0.0.1:8765`. The phone reaches it privately through
-`tailscale serve` (HTTPS), and alerts arrive as Web Push notifications. Everything is free.
+and serves a password-protected dashboard on `127.0.0.1:8765`. The phone reaches it over HTTPS through
+ngrok with Google sign-in, or privately through Tailscale. Alerts arrive as Web Push notifications.
+Everything uses free plans.
 
 Work through the steps in order, telling the user in one line what each step is doing. Use the
 shell that fits the OS (PowerShell on Windows, bash on macOS/Linux).
 
 ## Rules
 
-- **Never ask for, read, or type the dashboard password.** The user sets it themselves in their own
-  terminal (step 5). Don't put it in a command, file, or chat message.
-- Ask before installing anything system-wide (Python, Tailscale, Docker). The setup scripts only touch
+- **Never ask for, read, or type the dashboard password, PIN, 2FA key, screenshot key, ngrok token or
+  Google client secret.** The user enters them in their own terminal. Don't put them in a command,
+  file, or chat message, and don't read terminal output that shows them.
+- Ask before installing anything system-wide (Python, ngrok, Tailscale, Docker). The setup scripts only touch
   the project folder, plus one start-at-login entry for the current user.
 - If other people use this computer, remind the user once that they should be told it's monitored.
 
 ## 1. Get the code
 
 - If the current folder already contains `guardian.py` and `pcguardian/`, use it.
-- Otherwise clone the repo the user gave (or this plugin's repo) into a folder they agree to. Suggest
-  `%USERPROFILE%\pc-guardian` on Windows and `~/peek` on macOS/Linux:
+- Otherwise clone the repo the user gave, or `https://github.com/Sarthakgupta785/peek`, into a folder
+  they agree to. Suggest `%USERPROFILE%\peek` on Windows and `~/peek` on macOS/Linux:
   `git clone <repo-url> <folder>`. If `git` is missing, download the repo's ZIP from GitHub instead.
+- The repo may be private. If cloning says "repository not found", ask the user to accept their GitHub
+  invitation and sign in to GitHub on this computer, then try again.
 - Updating an existing install keeps the password, data and config. Follow the order for the OS, or
   the old code can keep running:
   - Windows: run `pause-peek.bat`, then `git pull`, then `setup.bat --no-prompt`.
