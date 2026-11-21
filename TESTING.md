@@ -71,7 +71,41 @@ Send the invite-er:
 **Mac test 7 especially:** in `guardian.log`, lines containing `Mac auth-failure log line` show what
 your macOS printed — please include them even if no alert arrived.
 
-## 5. Before an online exam / to uninstall
+## 5. Getting an update
+
+Your password, 2FA, keys, settings and history are kept. Run these in the Peek folder:
+
+**Mac**
+
+```bash
+git pull
+bash resume-peek.sh
+bash setup.sh
+```
+
+**Windows**
+
+1. Double-click `pause-peek.bat`, then press any key to close it.
+2. Run `git pull` in the Peek folder. If you downloaded a ZIP instead, unzip the new version over
+   the old folder and keep your `config.json` and `data` folder.
+3. Double-click `setup.bat`. It installs anything new and starts Peek again.
+
+**Linux desktop**
+
+```bash
+git pull
+bash setup.sh
+systemctl --user restart pc-guardian.service
+```
+
+**Docker (Linux)**
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+## 6. Before an online exam / to uninstall
 
 - Exams (Safe Exam Browser, proctoring): `./pause-peek.sh` (Windows `pause-peek.bat`) before,
   `./resume-peek.sh` after. Peek also steps aside automatically if it sees an exam app.

@@ -26,8 +26,12 @@ shell that fits the OS (PowerShell on Windows, bash on macOS/Linux).
 - Otherwise clone the repo the user gave (or this plugin's repo) into a folder they agree to. Suggest
   `%USERPROFILE%\pc-guardian` on Windows and `~/peek` on macOS/Linux:
   `git clone <repo-url> <folder>`. If `git` is missing, download the repo's ZIP from GitHub instead.
-- Updating an existing install: `git pull` in that folder, then re-run the setup script (step 4); it
-  keeps the password, data and config.
+- Updating an existing install keeps the password, data and config. Follow the order for the OS, or
+  the old code can keep running:
+  - Windows: run `pause-peek.bat`, then `git pull`, then `setup.bat --no-prompt`.
+  - macOS: `git pull`, `bash resume-peek.sh`, `bash setup.sh --no-prompt`.
+  - Linux desktop: `git pull`, `bash setup.sh --no-prompt`, `systemctl --user restart pc-guardian.service`.
+  - Docker: `git pull`, `docker compose up -d --build`.
 
 ## 2. Pick the install type
 

@@ -170,7 +170,7 @@ network and processes. Data is kept in `./data`.
 | See logs | `guardian.log` in the folder | same |
 | Run in a console (debug) | `.venv\Scripts\python guardian.py` | `.venv/bin/python guardian.py` |
 | Uninstall | `powershell -ExecutionPolicy Bypass -File uninstall.ps1` | `bash uninstall.sh` |
-| Update | download the new version over the old one (or `git pull`), then run setup again | same |
+| Update | `pause-peek.bat`, `git pull`, then `setup.bat` | `git pull`, `bash resume-peek.sh`, `bash setup.sh` on Mac (Linux: see [TESTING.md](TESTING.md)) |
 
 Changing the password logs out every device.
 
