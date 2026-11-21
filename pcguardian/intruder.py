@@ -229,6 +229,13 @@ def _field(xml, name):
     return m.group(1) if m else ""
 
 
+def _is_lock_screen_failure(xml):
+    """True only for the Windows lock/sign-in screen. Apps can also test a password in the background
+    (Chrome does), which is logged the same way but means nobody typed anything."""
+    process = _field(xml, "ProcessName").replace("/", "\\").rsplit("\\", 1)[-1].lower()
+    return _field(xml, "LogonProcessName").strip().lower() == "user32" and process in ("svchost.exe", "winlogon.exe")
+
+
 def _query_failures(win32evtlog, since_ms):
     q = f"*[System[(EventID=4625) and TimeCreated[timediff(@SystemTime) <= {since_ms}]]]"
     h = win32evtlog.EvtQuery("Security", win32evtlog.EvtQueryReverseDirection, q)
@@ -262,6 +269,9 @@ def _watch():
                 ltype = _field(xml, "LogonType")
                 if ltype not in LOCAL_LOGON_TYPES:
                     continue        # network/service logons: not someone at the keyboard
+                if not _is_lock_screen_failure(xml):
+                    log.info("Ignored a background sign-in check by %s", _field(xml, "ProcessName"))
+                    continue
                 if time.time() - last_photo < 20:
                     continue        # one burst per 20s, however many wrong tries
                 last_photo = time.time()
