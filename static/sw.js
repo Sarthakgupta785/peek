@@ -1,7 +1,7 @@
 // Peek service worker: shows push notifications and opens the app when tapped.
 
 const SHELL_CACHE = "peek-shell-v1";
-const SHELL_FILES = ["/offline", "/static/style.css", "/static/offline.js", "/static/icons/peek.svg",
+const SHELL_FILES = ["/offline", "/welcome", "/static/style.css", "/static/offline.js", "/static/icons/peek.svg",
                      "/static/icons/icon-180.png", "/static/icons/icon-192.png"];
 const SKIP_NOTICE = { "ngrok-skip-browser-warning": "1" };
 // ngrok's "can't reach the PC" answers. Anything else (including its access-denied page) passes through.
@@ -36,7 +36,28 @@ async function offlinePage() {
     { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
 
+// /api/login-info sits behind Google sign-in, so a redirect here means Google is needed.
+// (A redirect on "/" alone could also just be Peek sending you to its own login page.)
+async function needsGoogle() {
+  try {
+    const res = await fetch("/api/login-info", { headers: SKIP_NOTICE, credentials: "include",
+                                                 redirect: "manual", cache: "no-store" });
+    return res.type === "opaqueredirect";
+  } catch {
+    return false;
+  }
+}
+
 async function openPage(request) {
+  const url = new URL(request.url);
+  if (url.searchParams.has("signin")) {          // "Continue with Google": the browser's normal route
+    try {
+      const direct = await fetch(request);
+      return OFFLINE_CODES.has(direct.headers.get("ngrok-error-code")) ? offlinePage() : direct;
+    } catch {
+      return offlinePage();
+    }
+  }
   let res;
   try {
     // Signed-in visits skip ngrok's "You are about to visit" notice.
@@ -45,8 +66,13 @@ async function openPage(request) {
     return offlinePage();
   }
   if (OFFLINE_CODES.has(res.headers.get("ngrok-error-code"))) return offlinePage();
-  // Not signed in: use the browser's normal route to Google sign-in.
-  if (res.type === "opaqueredirect") return fetch(request);
+  if (res.type === "opaqueredirect") {
+    if ((url.pathname === "/" || url.pathname === "/login") && !url.search && await needsGoogle()) {
+      const welcome = await caches.match("/welcome");
+      if (welcome) return welcome;
+    }
+    return fetch(request);                       // any other redirect: follow it normally
+  }
   return res;
 }
 

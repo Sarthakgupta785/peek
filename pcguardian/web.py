@@ -139,6 +139,12 @@ def privacy_page():
     return _page("privacy.html")
 
 
+@app.get("/welcome")
+def welcome_page():
+    """Public: Peek's branded step before Google sign-in."""
+    return _page("welcome.html")
+
+
 @app.get("/offline")
 def offline_page():
     """Public: Peek's own screen, saved on the phone for when the PC can't be reached."""

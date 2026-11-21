@@ -57,7 +57,7 @@ def find_exe(cfg=None):
 
 # Paths anyone may load without Google sign-in: harmless files and the two pages Google's
 # sign-in screen links to. Nothing here shows anything about the PC.
-PUBLIC_PATHS = ["/about", "/privacy", "/offline", "/sw.js", "/manifest.webmanifest", "/static/style.css",
+PUBLIC_PATHS = ["/about", "/privacy", "/offline", "/welcome", "/sw.js", "/manifest.webmanifest", "/static/style.css",
                 "/static/offline.js"]
 PUBLIC_PREFIXES = ["/static/icons/"]
 
@@ -80,7 +80,9 @@ def write_policy(emails):
     client = google_client()
     if client:   # your own Google app: the sign-in screen says "Peek" instead of "ngrok.com"
         cid, secret = (json.dumps(v) for v in client)   # JSON strings are valid YAML scalars
-        own_app = (f"\n          client_id: {cid}\n          client_secret: {secret}\n          scopes:"
+        own_app = (f"\n          client_id: {cid}\n          client_secret: {secret}"
+                   "\n          max_session_duration: 720h\n          idle_session_timeout: 720h"   # 30 days
+                   "\n          scopes:"
                    "\n            - https://www.googleapis.com/auth/userinfo.profile"
                    "\n            - https://www.googleapis.com/auth/userinfo.email")
     public = _public_cel()

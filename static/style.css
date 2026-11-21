@@ -165,6 +165,11 @@ nav.tabs a.on { color: var(--accent); }
 .offline-list { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .offline-auto { text-align: center; }
 
+/* welcome screen */
+.welcome-card h2 { text-transform: none; letter-spacing: 0; color: var(--text); font-size: 20px; margin: 0; }
+.welcome-card .hint { margin: 0; }
+.welcome-note { font-size: 12px; text-align: center; }
+
 /* sign-in */
 body.auth { padding-bottom: 0; background: var(--bg); }
 .login-wrap { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: calc(32px + env(safe-area-inset-top)) 16px 32px; }
