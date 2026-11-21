@@ -49,6 +49,7 @@ def find_exe(cfg=None):
     if sys.platform == "win32":
         local = os.environ.get("LOCALAPPDATA", "")
         candidates += [os.path.join(local, "Microsoft", "WinGet", "Links", "ngrok.exe"),
+                       *map(str, Path(local, "Microsoft", "WinGet", "Packages").glob("Ngrok.Ngrok*/ngrok.exe")),
                        str(config.ROOT / "tools" / "ngrok.exe")]
     else:
         candidates += ["/opt/homebrew/bin/ngrok", "/usr/local/bin/ngrok", str(config.ROOT / "tools" / "ngrok")]
@@ -178,6 +179,8 @@ def _run():
             _state["error"] = "paused (exam mode)"
             time.sleep(2)
         wait_for_network()
+        if _paused.is_set():                         # an exam app opened while waiting for the network
+            continue
         policy = write_policy(cfg.get("allowed_emails", []))   # rewritten each start (it gets shredded)
         args = [exe, "http", f"127.0.0.1:{config.get('port')}", "--log", "stdout", "--log-format", "json",
                 "--inspect=false"]   # don't keep copies of requests in the local inspector
@@ -187,11 +190,19 @@ def _run():
             args += ["--traffic-policy-file", str(policy)]
         flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
         started = time.time()
-        try:
-            _proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                     encoding="utf-8", errors="replace", creationflags=flags)
-        except OSError as exc:
-            _state["error"] = str(exc)
+        launch_error = None
+        with _launch_lock:                           # pause() can't slip between this check and the launch
+            if _paused.is_set():
+                POLICY_PATH.unlink(missing_ok=True)
+                continue
+            try:
+                _proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                         encoding="utf-8", errors="replace", creationflags=flags)
+            except OSError as exc:
+                launch_error = exc
+        if launch_error:
+            POLICY_PATH.unlink(missing_ok=True)
+            _state["error"] = str(launch_error)
             time.sleep(60)
             continue
         _state["running"] = True
@@ -257,14 +268,16 @@ def _watch_url():
 
 _paused = threading.Event()
 _rotate = threading.Event()
+_launch_lock = threading.Lock()
 _active_pass = None
 
 
 def pause():
     """Stop ngrok now and keep it off (exam mode)."""
-    _paused.set()
-    if _proc and _proc.poll() is None:
-        _proc.terminate()
+    with _launch_lock:
+        _paused.set()
+        if _proc and _proc.poll() is None:
+            _proc.terminate()
 
 
 def resume():

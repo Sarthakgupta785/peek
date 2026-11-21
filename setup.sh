@@ -73,8 +73,17 @@ if [[ "$OS" == "Darwin" ]]; then
 </dict>
 </plist>
 EOF
+  launchctl enable "gui/$(id -u)/$LABEL" 2>/dev/null || true
   launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
-  launchctl bootstrap "gui/$(id -u)" "$PLIST"
+  STARTED=""
+  for _ in 1 2 3 4 5 6 7 8; do        # bootout can take a moment to finish
+    if launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null; then STARTED=1; break; fi
+    sleep 1
+  done
+  if [[ -z "$STARTED" ]]; then
+    echo "macOS could not start Peek. Sign out and back in, then run: bash setup.sh"
+    exit 1
+  fi
   echo "Registered launch agent $LABEL (starts when you log in, restarts if it stops)."
   echo
   echo "macOS will ask for permission the first time you take a screenshot:"

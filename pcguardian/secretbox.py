@@ -30,9 +30,11 @@ def _mac_master_key():
     if r.returncode == 0 and len(r.stdout.strip()) == 64:
         _mac_key = bytes.fromhex(r.stdout.strip())
         return _mac_key
+    if r.returncode != 44:                  # 44 = not found. Any other error must not replace the key.
+        raise RuntimeError("Couldn't read Peek's key from the Keychain: " + (r.stderr or "").strip())
     key = os.urandom(32)
     r = subprocess.run(["security", "add-generic-password", "-a", _KC_ACCOUNT, "-s", _KC_SERVICE,
-                        "-l", "Peek (PC monitor) encryption key", "-w", key.hex(), "-U"],
+                        "-l", "Peek (PC monitor) encryption key", "-w", key.hex()],
                        capture_output=True, text=True, timeout=20)
     if r.returncode != 0:
         raise RuntimeError("Couldn't save Peek's key in the Keychain: " + (r.stderr or "").strip())

@@ -47,7 +47,7 @@ Assume the user is a complete beginner. The full human guide is `INSTALL.md`.
   invitation and sign in to GitHub on this computer, then try again.
 - Updating an existing install keeps the password, data and config. Follow the order for the OS, or
   the old code can keep running:
-  - Windows: run `pause-peek.bat`, then `git pull`, then `setup.bat --no-prompt`.
+  - Windows: run `cmd /c .\pause-peek.bat`, then `git pull`, then `cmd /c .\setup.bat --no-prompt`.
   - macOS: `git pull`, `bash resume-peek.sh`, `bash setup.sh --no-prompt`.
   - Linux desktop: `git pull`, `bash setup.sh --no-prompt`, `systemctl --user restart pc-guardian.service`.
   - Docker: `git pull`, `docker compose up -d --build`.
@@ -75,7 +75,7 @@ Needs Python 3.10+ (3.12+ recommended).
 
 ## 4. Run setup (non-interactive)
 
-- Windows (PowerShell, in the project folder): `cmd /c setup.bat --no-prompt`
+- Windows (PowerShell, in the project folder): `cmd /c .\setup.bat --no-prompt`
 - macOS/Linux: `bash setup.sh --no-prompt`
 
 The script creates `.venv`, installs `requirements.txt`, registers start-at-login, starts the app, and
@@ -93,7 +93,7 @@ Then in step 5 the password command is `docker compose exec guardian python guar
 ## 5. Dashboard password (the user does this)
 
 Tell the user to open **their own terminal window** in the project folder and run:
-- Windows: `set-password.bat` (or double-click it in Explorer)
+- Windows: `.\set-password.bat` (or double-click it in Explorer)
 - macOS/Linux: `./set-password.sh`
 
 It asks for the password twice with hidden typing (8+ characters). Wait until they say it's done,
@@ -120,7 +120,7 @@ Two options; ask which the user prefers.
 if not, ask before installing: macOS `brew install ngrok/ngrok/ngrok`, Windows
 `winget install Ngrok.Ngrok` then `ngrok update`. Then the user runs, **in their own terminal**
 (it asks for the ngrok token with hidden input — never ask for the token in chat):
-- macOS/Linux: `./setup-remote.sh`   Windows: `setup-remote.bat`
+- macOS/Linux: `./setup-remote.sh`   Windows: `.\setup-remote.bat`
 
 It asks for: the authtoken (dashboard.ngrok.com → Your Authtoken), their free domain
 (dashboard.ngrok.com → Domains), and the Gmail address(es) allowed past Google sign-in. It saves

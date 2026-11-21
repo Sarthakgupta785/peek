@@ -53,33 +53,44 @@ def _running_exam_app():
     return None
 
 
+_gone = 0
+
+
+def _check():
+    global _gone
+    found = _running_exam_app()
+    if found and not _active.is_set():
+        _active.set()
+        _app["name"] = found
+        tunnel.pause()                      # cut remote access before anything else
+        events.add("exam", "Exam mode ON - Peek stepped aside",
+                   f"{found} started. Remote access, screenshots and camera are off until it closes.")
+        log.info("Exam app %s detected: tunnel paused, capture disabled", found)
+    elif not found and _active.is_set():
+        _gone += 1
+        if _gone >= 3:                      # closed for ~10s: it's really over
+            _gone = 0
+            _active.clear()
+            tunnel.resume()
+            events.add("exam", "Exam mode OFF - Peek is back",
+                       f"{_app['name']} closed. Remote access is back on.")
+            _app["name"] = None
+    else:
+        _gone = 0
+
+
 def _loop():
-    gone = 0
     while True:
+        time.sleep(3)
         try:
-            found = _running_exam_app()
-            if found and not _active.is_set():
-                _active.set()
-                _app["name"] = found
-                events.add("exam", "Exam mode ON - Peek stepped aside",
-                           f"{found} started. Remote access, screenshots and camera are off until it closes.")
-                tunnel.pause()
-                log.info("Exam app %s detected: tunnel paused, capture disabled", found)
-            elif not found and _active.is_set():
-                gone += 1
-                if gone >= 3:                       # closed for ~10s: it's really over
-                    gone = 0
-                    _active.clear()
-                    tunnel.resume()
-                    events.add("exam", "Exam mode OFF - Peek is back",
-                               f"{_app['name']} closed. Remote access is back on.")
-                    _app["name"] = None
-            else:
-                gone = 0
+            _check()
         except Exception:
             log.exception("exam guard error")
-        time.sleep(3)
 
 
 def start():
+    try:
+        _check()                            # before the tunnel starts
+    except Exception:
+        log.exception("exam guard error")
     threading.Thread(target=_loop, name="exam-guard", daemon=True).start()

@@ -6,6 +6,7 @@ import socket
 import threading
 import re
 import time
+from urllib.parse import urlparse
 
 import psutil
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -42,9 +43,28 @@ CSP = ("default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
        "img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
 
 
+def _blocked_api_write(request: Request):
+    """Stop other websites from posting to this API (for example to trigger a login lockout)."""
+    if request.method != "POST" or not request.url.path.startswith("/api/"):
+        return False
+    if request.headers.get("Content-Type", "").split(";")[0].strip().lower() != "application/json":
+        return True
+    if request.headers.get("Sec-Fetch-Site", "").lower() == "cross-site":
+        return True
+    origin = request.headers.get("Origin")
+    if not origin:
+        return False
+    allowed = {h.strip().lower() for h in (request.headers.get("Host", ""),
+                                           request.headers.get("X-Forwarded-Host", "")) if h.strip()}
+    return urlparse(origin).netloc.lower() not in allowed
+
+
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
-    response = await call_next(request)
+    if _blocked_api_write(request):
+        response = JSONResponse({"error": "Request blocked."}, status_code=403)
+    else:
+        response = await call_next(request)
     response.headers.setdefault("Content-Security-Policy", CSP)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -64,7 +84,7 @@ def client_ip(request: Request):
     peer = request.client.host if request.client else ""
     fwd = request.headers.get("X-Forwarded-For", "")
     if peer in ("127.0.0.1", "::1") and fwd:
-        return fwd.split(",")[0].strip()
+        return fwd.split(",")[-1].strip()      # the last hop is added by our proxy; earlier ones can be faked
     return peer or "unknown"
 
 
@@ -80,14 +100,23 @@ def _device(ua):
     return f"{name}{' / ' + browser if browser else ''}"
 
 
+NGROK_HOSTS = (".ngrok-free.app", ".ngrok.app", ".ngrok.dev", ".ngrok-free.dev")
+
+
+def _via_ngrok(request: Request):
+    hosts = (request.headers.get("Host", ""), request.headers.get("X-Forwarded-Host", ""))
+    return any(h.split(":")[0].strip().lower().endswith(NGROK_HOSTS) for h in hosts)
+
+
 def who(request: Request):
     """Who is connecting: Tailscale identity if present, else IP + device."""
-    login = request.headers.get("Tailscale-User-Login")
+    via_ngrok = _via_ngrok(request)
+    login = None if via_ngrok else request.headers.get("Tailscale-User-Login")   # can be faked through ngrok
     ua = request.headers.get("User-Agent", "")
     if login:
         name = request.headers.get("Tailscale-User-Name")
         return f"{name or login} ({login}) on {_device(ua)}"
-    via = " via ngrok" if request.headers.get("X-Forwarded-Host", "").endswith((".ngrok-free.app", ".ngrok.app", ".ngrok.dev", ".ngrok-free.dev")) else ""
+    via = " via ngrok" if via_ngrok else ""
     return f"IP {client_ip(request)} on {_device(ua)}{via}"
 
 

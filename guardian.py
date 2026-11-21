@@ -121,11 +121,34 @@ def set_pin():
         return 0
 
 
+def _stop_running_peek():
+    """Windows: ending the task can leave the venv's real Python running, so stop it directly."""
+    import psutil
+    me = {os.getpid()}
+    try:
+        me |= {p.pid for p in psutil.Process().parents()}
+    except psutil.Error:
+        pass
+    script = os.path.normcase(str(config.ROOT / "guardian.py"))
+    for p in psutil.process_iter(["name", "cmdline"]):
+        try:
+            args = p.info["cmdline"] or []
+            if p.pid in me or (p.info["name"] or "").lower() not in ("python.exe", "pythonw.exe"):
+                continue
+            if any(a.startswith("--") for a in args):       # a helper command, not the background app
+                continue
+            if any(os.path.normcase(os.path.abspath(a)) == script for a in args[1:]):
+                p.kill()
+        except (psutil.Error, OSError):
+            pass
+
+
 def restart_service():
     """Restart the background Peek so it picks up new settings."""
     import subprocess
     if sys.platform == "win32":
         subprocess.run(["schtasks", "/end", "/tn", "Peek"], capture_output=True)
+        _stop_running_peek()
         time.sleep(3)
         subprocess.run(["schtasks", "/run", "/tn", "Peek"], capture_output=True)
     elif sys.platform == "darwin":
@@ -237,9 +260,9 @@ def run():
 
     monitor.start_all()
     from pcguardian import examguard, intruder, notice, tunnel
+    examguard.start()                    # first, so ngrok never starts while an exam app is open
     tunnel.start()
     intruder.start()
-    examguard.start()
     notice.start()
     log.info("Peek %s on %s listening on http://%s:%s", __import__("pcguardian").__version__,
              platform.NAME, cfg["host"], cfg["port"])
@@ -294,6 +317,8 @@ def main():
         auth.set_secret("oauth_client_id", cid)
         auth.set_secret("oauth_client_secret", secret)
         print("Saved (encrypted). Restarting Peek so ngrok uses it...")
+        restart_service()
+        print("Peek restarted. Remote access is back within about a minute.")
         return 0
     if args.screen_key or args.new_screen_key:
         from pcguardian import db, shotcrypt

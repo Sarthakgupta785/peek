@@ -320,6 +320,9 @@ def _watch_mac():
                 if line.startswith(("Filtering the log", "Timestamp")) or not line.strip():
                     continue
                 log.info("Mac auth-failure log line: %s", line.strip()[:300])
+                from .platforms import current as platform
+                if not platform.is_locked():        # sudo or an app prompt, not the lock screen
+                    continue
                 if time.time() - last_photo < 20:
                     continue
                 last_photo = time.time()

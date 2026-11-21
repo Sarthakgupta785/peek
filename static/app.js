@@ -100,9 +100,22 @@ document.addEventListener("visibilitychange", () => {
 
 // ---------------------------------------------------------------- overview
 
+// A blocked redirect to Google looks like a network error. If Peek itself is online, reload into sign-in.
+async function recoverIfSignedOut(err) {
+  if (!(err instanceof TypeError)) return;
+  try {
+    const res = await fetch("/about", { cache: "no-store", headers: { "ngrok-skip-browser-warning": "1" } });
+    if (!res.ok || !res.headers.get("X-Peek")) return;
+    const last = Number(sessionStorage.getItem("peek-recover") || 0);
+    if (Date.now() - last < 30000) return;
+    sessionStorage.setItem("peek-recover", String(Date.now()));
+    location.reload();
+  } catch { /* still offline */ }
+}
+
 async function loadOverview() {
   let o;
-  try { o = await getJSON("/api/overview"); } catch (e) { $("subtitle").textContent = "PC not reachable"; return; }
+  try { o = await getJSON("/api/overview"); } catch (e) { $("subtitle").textContent = "PC not reachable"; recoverIfSignedOut(e); return; }
   try { localStorage.setItem("peek-last-seen", String(Date.now())); } catch { /* optional */ }
   applyFeatures(o);
   $("hostname").textContent = o.hostname;
