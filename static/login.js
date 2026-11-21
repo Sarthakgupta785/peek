@@ -1,3 +1,9 @@
+// The wordmark font loads after the page, so it never delays the first screen.
+const peekFont = document.createElement("link");
+peekFont.rel = "stylesheet";
+peekFont.href = "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&display=swap";
+document.head.append(peekFont);
+
 const form = document.getElementById("form");
 const msg = document.getElementById("msg");
 const go = document.getElementById("go");

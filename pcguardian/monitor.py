@@ -233,6 +233,7 @@ def startup_report():
 
 
 def start_all():
+    top_apps_cached()                    # warm up so the first dashboard load is instant
     try:
         startup_report()
     except Exception:
@@ -257,6 +258,26 @@ def top_apps(limit=5):
     items = [g for k, g in groups.items() if k not in ignore]
     items.sort(key=lambda g: g["mem"], reverse=True)
     return items[:limit]
+
+
+_top_cache = {"at": 0.0, "items": []}
+_top_refreshing = threading.Lock()
+
+
+def _refresh_top_apps():
+    try:
+        _top_cache.update(items=top_apps(5), at=time.time())
+    except Exception:
+        log.exception("top apps refresh failed")
+    finally:
+        _top_refreshing.release()
+
+
+def top_apps_cached(max_age=8):
+    """Answer instantly from the last scan, and refresh in the background when it's getting old."""
+    if time.time() - _top_cache["at"] > max_age and _top_refreshing.acquire(blocking=False):
+        threading.Thread(target=_refresh_top_apps, name="top-apps", daemon=True).start()
+    return _top_cache["items"]
 
 
 def find_processes(q):

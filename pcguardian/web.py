@@ -11,6 +11,7 @@ import psutil
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
 
 from . import __version__, auth, config, db, events, examguard, intruder, monitor, push, shotcrypt, tunnel
 from .platforms import current as platform
@@ -18,6 +19,22 @@ from .platforms import current as platform
 log = logging.getLogger(__name__)
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+
+
+class TextGZip:
+    """Compress pages and data, but not images (already compact or encrypted)."""
+
+    def __init__(self, inner):
+        self.inner = inner
+        self.gzip = GZipMiddleware(inner, minimum_size=800)
+
+    async def __call__(self, scope, receive, send):
+        path = scope.get("path", "")
+        skip = path.startswith(("/api/screenshot", "/api/camera", "/api/intruders")) or path.endswith(".png")
+        await (self.inner if scope["type"] != "http" or skip else self.gzip)(scope, receive, send)
+
+
+app.add_middleware(TextGZip)
 app.mount("/static", StaticFiles(directory=config.STATIC_DIR), name="static")
 
 CSP = ("default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; "
@@ -199,8 +216,15 @@ async def login(request: Request):
                f"From {who(request)}. If this wasn't you, change the password.")
     resp = JSONResponse({"ok": True})
     resp.set_cookie(auth.COOKIE_NAME, token, max_age=auth.session_days() * 86400,
-                    httponly=True, secure=True, samesite="strict", path="/")
+                    httponly=True, secure=True, samesite="lax", path="/")  # lax: survives the return from Google
+    _set_device_pass(resp)
     return resp
+
+
+def _set_device_pass(response: Response):
+    """Only called after a full login or for a valid session, which already passed Google."""
+    response.set_cookie(auth.DEVICE_COOKIE, auth.device_pass(), max_age=auth.device_pass_seconds_left(),
+                        httponly=True, secure=True, samesite="lax", path="/")
 
 
 @app.post("/api/logout")
@@ -208,6 +232,7 @@ def logout(request: Request):
     auth.delete_session(request.cookies.get(auth.COOKIE_NAME))
     resp = JSONResponse({"ok": True})
     resp.delete_cookie(auth.COOKIE_NAME, path="/")
+    resp.delete_cookie(auth.DEVICE_COOKIE, path="/")
     return resp
 
 
@@ -217,13 +242,16 @@ def logout_all():
     events.add("logout_all", "All dashboard sessions were logged out", notify=False)
     resp = JSONResponse({"ok": True})
     resp.delete_cookie(auth.COOKIE_NAME, path="/")
+    resp.delete_cookie(auth.DEVICE_COOKIE, path="/")
     return resp
 
 
 # ---------------------------------------------------------------- dashboard data
 
 @app.get("/api/overview", dependencies=[Depends(require_session)])
-def overview():
+def overview(request: Request, response: Response):
+    if request.cookies.get(auth.DEVICE_COOKIE) != auth.device_pass():
+        _set_device_pass(response)
     now = time.time()
     boot = psutil.boot_time()
     idle = platform.idle_seconds()
@@ -255,7 +283,7 @@ def overview():
         "disk_total": disk_total,
         "disk_free": disk_free,
         "disk_drive": monitor.SYSTEM_DRIVE,
-        "top_apps": monitor.top_apps(5),
+        "top_apps": monitor.top_apps_cached(),
         "watched_open": monitor.watched_open_now(),
         "watched": config.get("watched_apps"),
     }
@@ -321,18 +349,49 @@ def screenshot():
         resp.headers["X-PCG-Fallback"] = note + " - here is a camera photo instead"
         return resp
     try:
-        png = platform.screenshot_png()
+        image, media_type = _fast_screenshot()
+    except Exception:
+        try:
+            image, media_type = _compact_screenshot(platform.screenshot_png())
+        except Exception as exc:
+            log.warning("Screenshot failed: %s", exc)
+            raise HTTPException(500, "Screenshot failed. On macOS allow Screen Recording for Python.")
+    events.add("screenshot", "Screenshot taken from the dashboard",
+               "Sent end-to-end encrypted." if shotcrypt.enabled() else "", notify=False)
+    return _image_response(image, media_type)
+
+
+def _fast_screenshot(max_width=2560, quality=82):
+    """Capture straight to JPEG, skipping the slow PNG step."""
+    import cv2
+    import mss
+    import numpy as np
+    with getattr(mss, "MSS", mss.mss)() as sct:
+        frame = np.asarray(sct.grab(sct.monitors[0]))[:, :, :3]
+    h, w = frame.shape[:2]
+    if w > max_width:
+        frame = cv2.resize(frame, (max_width, int(h * max_width / w)), interpolation=cv2.INTER_AREA)
+    ok, jpg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, quality])
+    if not ok:
+        raise RuntimeError("JPEG encoding failed")
+    return jpg.tobytes(), "image/jpeg"
+
+
+def _compact_screenshot(png: bytes, max_width=2560, quality=82):
+    """Much smaller over the internet, still sharp on a phone. Falls back to the original PNG."""
+    try:
+        import cv2
+        import numpy as np
+        img = cv2.imdecode(np.frombuffer(png, np.uint8), cv2.IMREAD_COLOR)
+        h, w = img.shape[:2]
+        if w > max_width:
+            img = cv2.resize(img, (max_width, int(h * max_width / w)), interpolation=cv2.INTER_AREA)
+        ok, jpg = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, quality])
+        if ok and len(jpg) < len(png):
+            return jpg.tobytes(), "image/jpeg"
     except Exception as exc:
-        log.warning("Screenshot failed: %s", exc)
-        raise HTTPException(500, "Screenshot failed. On macOS allow Screen Recording for Python.")
-    if shotcrypt.enabled():
-        events.add("screenshot", "Screenshot taken from the dashboard", "Sent end-to-end encrypted.",
-                   notify=False)
-        return Response(shotcrypt.encrypt(png), media_type="application/octet-stream",
-                        headers={"Cache-Control": "no-store", "X-PCG-Encrypted": "aes-256-gcm",
-                                 "X-PCG-Key-Id": shotcrypt.key_id()})
-    events.add("screenshot", "Screenshot taken from the dashboard", notify=False)
-    return Response(png, media_type="image/png", headers={"Cache-Control": "no-store"})
+        log.info("Screenshot compression skipped: %s", exc)
+    return png, "image/png"
 
 
 def _image_response(data: bytes, media_type: str):
@@ -360,7 +419,7 @@ def camera_photo():
         png = platform.screenshot_png()
     except Exception:
         raise HTTPException(503, "Couldn't take a photo: " + reason)
-    resp = _image_response(png, "image/png")
+    resp = _image_response(*_compact_screenshot(png))
     resp.headers["X-PCG-Fallback"] = reason[:200]
     return resp
 

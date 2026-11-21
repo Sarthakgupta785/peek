@@ -220,3 +220,28 @@ def delete_session(token):
 
 def delete_all_sessions():
     db.execute("DELETE FROM sessions")
+    db.execute("DELETE FROM kv WHERE key IN ('device_pass', 'device_pass_created')")   # cancels trusted devices
+
+
+# ---------------------------------------------------------------- trusted-device pass
+
+DEVICE_COOKIE = "peek_device"
+DEVICE_PASS_DAYS = 30
+
+
+def device_pass():
+    """Private pass that lets a device which already completed sign-in skip Google after ngrok
+    reconnects. Replaced every 30 days and whenever all sessions are logged out."""
+    token = get_secret("device_pass")
+    created = int(db.kv_get("device_pass_created", "0") or 0)
+    if token and time.time() - created < DEVICE_PASS_DAYS * 86400:
+        return token
+    token = secrets.token_urlsafe(32)
+    set_secret("device_pass", token)
+    db.kv_set("device_pass_created", str(int(time.time())))
+    return token
+
+
+def device_pass_seconds_left():
+    created = int(db.kv_get("device_pass_created", "0") or 0)
+    return max(60, int(created + DEVICE_PASS_DAYS * 86400 - time.time()))

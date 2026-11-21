@@ -86,16 +86,23 @@ def write_policy(emails):
                    "\n            - https://www.googleapis.com/auth/userinfo.profile"
                    "\n            - https://www.googleapis.com/auth/userinfo.email")
     public = _public_cel()
+    from . import auth
+    global _active_pass
+    _active_pass = auth.device_pass()
+    trusted = f"'{auth.DEVICE_COOKIE}' in req.cookies && req.cookies['{auth.DEVICE_COOKIE}'][0].value == '{_active_pass}'"
     POLICY_PATH.write_text(f"""# Written by Peek - edit allowed_emails in config.json instead.
 on_http_request:
   - expressions:
       - "!({public})"
+      - "!({trusted})"
     actions:
       - type: oauth
         config:
-          provider: google{own_app}
+          provider: google
+          auth_id: peek{own_app}
   - expressions:
       - "!({public})"
+      - "!({trusted})"
       - "!(actions.ngrok.oauth.identity.email in [{allowed}])"
     actions:
       - type: deny
@@ -114,11 +121,10 @@ def google_client():
 
 def _shred_policy_later(seconds=20):
     """ngrok reads the policy file at start-up; after that, remove it so the client secret
-    isn't left lying in a plain-text file."""
+    and device pass aren't left lying in a plain-text file."""
     def run():
         time.sleep(seconds)
-        if google_client():
-            POLICY_PATH.unlink(missing_ok=True)
+        POLICY_PATH.unlink(missing_ok=True)
     threading.Thread(target=run, daemon=True).start()
 
 
@@ -164,6 +170,7 @@ def _run():
     _kill_leftovers()
     atexit.register(_stop)
 
+    threading.Thread(target=_watch_device_pass, name="device-pass", daemon=True).start()
     failures = 0
     last_url = None
     while True:
@@ -209,6 +216,10 @@ def _run():
         _proc.wait()
         _state["running"] = False
         _state["url"] = None
+        if _rotate.is_set():
+            _rotate.clear()
+            failures = 0
+            continue
         if _paused.is_set():
             log.info("ngrok stopped for exam mode")
             failures = 0
@@ -221,6 +232,20 @@ def _run():
         time.sleep(min(300, 10 * failures))
 
 
+def _watch_device_pass():
+    """Apply a replaced pass (30-day expiry or Log out all devices) within about 20 seconds."""
+    from . import auth
+    while True:
+        time.sleep(20)
+        try:
+            if not _paused.is_set() and _proc and _proc.poll() is None and auth.device_pass() != _active_pass:
+                log.info("Trusted-device pass changed: restarting ngrok")
+                _rotate.set()
+                _proc.terminate()
+        except Exception:
+            log.exception("device pass watcher error")
+
+
 def _watch_url():
     for _ in range(30):
         time.sleep(2)
@@ -231,6 +256,8 @@ def _watch_url():
 
 
 _paused = threading.Event()
+_rotate = threading.Event()
+_active_pass = None
 
 
 def pause():

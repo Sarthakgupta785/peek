@@ -2,6 +2,12 @@
 
 const $ = (id) => document.getElementById(id);
 
+// The wordmark font loads after the page, so it never delays the first screen.
+const peekFont = document.createElement("link");
+peekFont.rel = "stylesheet";
+peekFont.href = "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&display=swap";
+document.head.append(peekFont);
+
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     credentials: "same-origin",
@@ -98,6 +104,7 @@ async function loadOverview() {
   let o;
   try { o = await getJSON("/api/overview"); } catch (e) { $("subtitle").textContent = "PC not reachable"; return; }
   try { localStorage.setItem("peek-last-seen", String(Date.now())); } catch { /* optional */ }
+  applyFeatures(o);
   $("hostname").textContent = o.hostname;
   $("subtitle").textContent = `Up for ${dur(o.uptime)} · since ${new Date(o.boot * 1000).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })}`;
   document.title = `${o.hostname} · Peek`;
@@ -194,8 +201,23 @@ function makeChart(id, datasets, yOpts) {
   return charts[id];
 }
 
+let chartLibrary = null;
+function loadChartLibrary() {          // only downloaded when the Charts page is opened
+  if (typeof Chart !== "undefined") return Promise.resolve();
+  chartLibrary = chartLibrary || new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js";
+    s.onload = resolve;
+    s.onerror = () => { chartLibrary = null; reject(new Error("chart library")); };
+    document.head.append(s);
+  });
+  return chartLibrary;
+}
+
 async function loadCharts() {
-  if (typeof Chart === "undefined") { $("chart-msg").textContent = "Chart library didn't load (no internet on the phone?)."; return; }
+  $("chart-msg").textContent = typeof Chart === "undefined" ? "Loading charts…" : "";
+  try { await loadChartLibrary(); }
+  catch { $("chart-msg").textContent = "Chart library didn't load (no internet on the phone?)."; return; }
   const { rows } = await getJSON(`/api/metrics?hours=${rangeHours}`);
   $("chart-msg").textContent = rows.length ? "" : "No data yet — samples are recorded every 30 seconds.";
   const labels = rows.map((r) => {
@@ -683,5 +705,5 @@ function applyFeatures(o) {
 }
 
 pushRegistration().catch(() => {});
-getJSON("/api/overview").then(applyFeatures).catch(() => {});
 route();
+if (current !== "overview") getJSON("/api/overview").then(applyFeatures).catch(() => {});
