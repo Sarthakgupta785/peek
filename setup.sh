@@ -110,29 +110,7 @@ EOF
   echo "Registered systemd user service pc-guardian (starts when you log in)."
 fi
 
-# ---- 5. Tailscale
 PORT="$(.venv/bin/python -c 'from pcguardian import config; print(config.load()["port"])')"
-TS=""
-if command -v tailscale >/dev/null 2>&1; then TS="tailscale"
-elif [[ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]]; then TS="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
-fi
-echo
-echo "--- Phone access with Tailscale (free) ---"
-if [[ -z "$TS" ]]; then
-  echo "Tailscale is not installed yet. To finish:"
-  echo " 1. Install Tailscale on this computer: https://tailscale.com/download and sign in."
-  echo " 2. In https://login.tailscale.com/admin/dns turn on MagicDNS and HTTPS Certificates."
-  echo " 3. Run ./setup.sh again (or: tailscale serve --bg $PORT)."
-  echo " 4. Install Tailscale on your phone and sign in with the same account."
-else
-  if "$TS" serve --bg "$PORT"; then
-    DNS="$("$TS" status --json 2>/dev/null | .venv/bin/python -c 'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))' 2>/dev/null || true)"
-    [[ -n "$DNS" ]] && echo "Open this on your phone (with Tailscale on):  https://$DNS"
-  else
-    echo "tailscale serve failed. Sign in, enable MagicDNS + HTTPS Certificates in the admin console, then run:"
-    echo "   $TS serve --bg $PORT"
-  fi
-fi
 
 echo
 echo "=== Done ==="
@@ -140,7 +118,7 @@ echo "Local test address (this computer only): http://127.0.0.1:$PORT"
 echo "Logs: $ROOT/guardian.log"
 echo
 echo "Next steps:"
-echo "  1. Remote access from your phone:  ./setup-remote.sh"
+echo "  1. Phone access with ngrok:        ./setup-remote.sh"
 echo "  2. Extra locks (recommended):      ./setup-2fa.sh   ./set-pin.sh   ./screen-key.sh"
 if [[ "$OS" == "Darwin" ]]; then
   echo "  3. Allow screen + camera on macOS: ./mac-permissions.sh"

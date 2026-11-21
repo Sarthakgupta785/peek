@@ -252,7 +252,7 @@ def run():
     if not auth.password_is_set():
         log.warning("No dashboard password set! Run: python guardian.py --set-password")
 
-    # Right after boot, give the OS a moment to settle (network, user apps, Tailscale).
+    # Right after boot, give the OS a moment to settle (network, user apps).
     if time.time() - psutil.boot_time() < 180:
         delay = cfg["startup_delay_seconds"]
         log.info("Just booted - waiting %ss before starting monitors", delay)

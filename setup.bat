@@ -52,13 +52,15 @@ rem ---- 4. Start at log on (Task Scheduler)
 echo Registering the "Peek" task to start when you log on...
 powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\register_task.ps1" || goto :fail
 
-rem ---- 5. Tailscale
-powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\tailscale_serve.ps1"
-
 echo.
 echo === Done ===
 echo Local test address (this PC only): http://127.0.0.1:8765
 echo Logs: %~dp0guardian.log
+echo.
+echo Next steps:
+echo   1. Phone access with ngrok:    setup-remote.bat
+echo   2. Extra locks (recommended):  setup-2fa.bat   set-pin.bat   screen-key.bat
+echo   Before an online exam:         pause-peek.bat   (after: resume-peek.bat)
 echo.
 if not defined NOPROMPT pause
 exit /b 0

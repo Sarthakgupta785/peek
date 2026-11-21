@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Removes the Peek launch agent (macOS) or systemd user service (Linux). Data is kept.
-#   ./uninstall.sh [--reset-tailscale]
+#   ./uninstall.sh
 set -u
 if [[ "$(uname -s)" == "Darwin" ]]; then
   LABEL="com.pcguardian.agent"
@@ -12,13 +12,4 @@ else
   systemctl --user daemon-reload 2>/dev/null || true
 fi
 
-RESET="${1:-}"
-if [[ "$RESET" != "--reset-tailscale" && -t 0 ]]; then
-  read -r -p "Also run 'tailscale serve reset'? This removes ALL tailscale serve settings (y/N) " a
-  [[ "$a" =~ ^[yY] ]] && RESET="--reset-tailscale"
-fi
-if [[ "$RESET" == "--reset-tailscale" ]]; then
-  TS="$(command -v tailscale || echo /Applications/Tailscale.app/Contents/MacOS/Tailscale)"
-  "$TS" serve reset && echo "tailscale serve reset done."
-fi
 echo "Done. Delete this folder to remove everything (the 'data' folder holds your history)."

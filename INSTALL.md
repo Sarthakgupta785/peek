@@ -62,8 +62,7 @@ cd ~/peek
 bash setup.sh
 ```
 
-Choose a **dashboard password** when asked. Nothing appears while you type; that's normal. You can ignore any message about Tailscale.
-
+Choose a **dashboard password** when asked. Nothing appears while you type; that's normal.
 ### Step 4: Connect your phone
 
 ```bash
@@ -139,8 +138,7 @@ Now go to **[Finish on your phone](#finish-on-your-phone)**.
 
 Open the `peek` folder and double-click **`setup.bat`**.
 
-Choose a **dashboard password** when asked. Nothing appears while you type; that's normal. You can ignore any message about Tailscale.
-
+Choose a **dashboard password** when asked. Nothing appears while you type; that's normal.
 If it can't create the startup task, right-click `setup.bat` and choose **Run as administrator**.
 
 ### Step 4: Connect your phone

@@ -3,5 +3,5 @@
   "version": "0.9.0-beta",
   "description": "Install, update and troubleshoot Peek - a self-hosted, free app to watch your Windows/Mac computer from your phone.",
   "license": "MIT",
-  "keywords": ["monitoring", "self-hosted", "tailscale", "pwa", "windows", "macos"]
+  "keywords": ["monitoring", "self-hosted", "ngrok", "pwa", "windows", "macos"]
 }

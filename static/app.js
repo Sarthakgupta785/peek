@@ -634,7 +634,7 @@ async function refreshPush() {
       : "This browser can't receive push notifications.";
     return;
   }
-  if (!window.isSecureContext) { state.textContent = "Notifications need HTTPS — open the https://…ts.net address."; return; }
+  if (!window.isSecureContext) { state.textContent = "Notifications need HTTPS — open your https://….ngrok-free.dev address."; return; }
   if (Notification.permission === "denied") {
     state.textContent = "Notifications are blocked for this site. Allow them in the browser/phone settings, then reload.";
     return;

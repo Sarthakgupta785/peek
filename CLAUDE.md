@@ -1,6 +1,6 @@
 # Peek
 
-Self-hosted dashboard + phone push alerts for a Windows/macOS/Linux computer, reached via ngrok (with Google sign-in) or Tailscale. Beta testers: see TESTING.md.
+Self-hosted dashboard + phone push alerts for a Windows/macOS/Linux computer, reached via ngrok with Google sign-in. Beta testers: see TESTING.md.
 
 - **Installing, updating, checking or uninstalling for a user:** follow
   [skills/install-peek/SKILL.md](skills/install-peek/SKILL.md) exactly. Never ask for or

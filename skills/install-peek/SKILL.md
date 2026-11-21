@@ -1,13 +1,13 @@
 ---
 name: install-peek
-description: Install, update, troubleshoot or uninstall Peek, a free self-hosted dashboard with phone alerts for a Windows, Mac or Linux computer, reached through ngrok or Tailscale. Use when the user says "install Peek", "install https://github.com/Sarthakgupta785/peek", "set up Peek", "update Peek", "Peek isn't working", or "uninstall Peek".
+description: Install, update, troubleshoot or uninstall Peek, a free self-hosted dashboard with phone alerts for a Windows, Mac or Linux computer, reached through ngrok. Use when the user says "install Peek", "install https://github.com/Sarthakgupta785/peek", "set up Peek", "update Peek", "Peek isn't working", or "uninstall Peek".
 ---
 
 # Install Peek
 
 Peek runs on the user's own computer, records system stats and events in a local SQLite file,
 and serves a password-protected dashboard on `127.0.0.1:8765`. The phone reaches it over HTTPS through
-ngrok with Google sign-in, or privately through Tailscale. Alerts arrive as Web Push notifications.
+ngrok with Google sign-in. Alerts arrive as Web Push notifications.
 Everything uses free plans.
 
 Work through the steps in order, telling the user in one line what each step is doing. Use the
@@ -18,7 +18,7 @@ shell that fits the OS (PowerShell on Windows, bash on macOS/Linux).
 - **Never ask for, read, or type the dashboard password, PIN, 2FA key, screenshot key, ngrok token or
   Google client secret.** The user enters them in their own terminal. Don't put them in a command,
   file, or chat message, and don't read terminal output that shows them.
-- Ask before installing anything system-wide (Python, ngrok, Tailscale, Docker). The setup scripts only touch
+- Ask before installing anything system-wide (Python, ngrok, Docker). The setup scripts only touch
   the project folder, plus one start-at-login entry for the current user.
 - If other people use this computer, remind the user once that they should be told it's monitored.
 
@@ -78,8 +78,8 @@ Needs Python 3.10+ (3.12+ recommended).
 - Windows (PowerShell, in the project folder): `cmd /c .\setup.bat --no-prompt`
 - macOS/Linux: `bash setup.sh --no-prompt`
 
-The script creates `.venv`, installs `requirements.txt`, registers start-at-login, starts the app, and
-runs `tailscale serve --bg 8765` if Tailscale is installed. Read its output and fix any error before
+The script creates `.venv`, installs `requirements.txt`, registers start-at-login, and starts the app.
+Read its output and fix any error before
 going on. If Windows says the task couldn't be registered, ask the user to run `setup.bat` once from
 an Administrator terminal.
 
@@ -114,10 +114,9 @@ then confirm without seeing it:
 
 ## 7. Phone access
 
-Two options; ask which the user prefers.
+Peek uses ngrok for phone access, so don't offer a choice. Nothing is installed on the phone.
 
-**A. ngrok (default — nothing to install on the phone).** Check ngrok is installed (`ngrok version`);
-if not, ask before installing: macOS `brew install ngrok/ngrok/ngrok`, Windows
+Check ngrok is installed (`ngrok version`); if not, ask before installing: macOS `brew install ngrok/ngrok/ngrok`, Windows
 `winget install Ngrok.Ngrok` then `ngrok update`. Then the user runs, **in their own terminal**
 (it asks for the ngrok token with hidden input — never ask for the token in chat):
 - macOS/Linux: `./setup-remote.sh`   Windows: `.\setup-remote.bat`
@@ -126,12 +125,6 @@ It asks for: the authtoken (dashboard.ngrok.com → Your Authtoken), their free 
 (dashboard.ngrok.com → Domains), and the Gmail address(es) allowed past Google sign-in. It saves
 `config.json` and restarts Peek. Verify: `curl -s -o /dev/null -w "%{http_code}" -H "ngrok-skip-browser-warning: 1" https://<domain>/about`
 → `200`, and `https://<domain>/` → `302` (Google sign-in in front).
-
-**B. Tailscale (most private).** Check `tailscale` (Windows: `C:\Program Files\Tailscale\tailscale.exe`;
-macOS App Store: `/Applications/Tailscale.app/Contents/MacOS/Tailscale`). User installs it from
-https://tailscale.com/download, signs in, enables MagicDNS + HTTPS Certificates at
-https://login.tailscale.com/admin/dns; then run `tailscale serve --bg 8765` and read `Self.DNSName`
-from `tailscale status --json`.
 
 ## 8. Extra locks (recommended) — the user runs these in their own terminal
 
@@ -142,7 +135,7 @@ from `tailscale status --json`.
 
 ## 9. Finish on the phone
 
-1. Open the address (ngrok: tap **Visit Site**, then Google sign-in), log in.
+1. Open the ngrok address, tap **Visit Site**, sign in with Google, then log in to Peek.
 2. Add to Home Screen (iPhone: Share → Add to Home Screen; iOS 16.4+. Android Chrome: ⋮ → Install app).
 3. Open from the icon → Settings → Notifications → Turn on → Send test.
 
@@ -151,8 +144,7 @@ Exams: tell students to run `pause-peek` before Safe Exam Browser / proctored ex
 
 ## Uninstall
 
-- Windows: `powershell -ExecutionPolicy Bypass -File uninstall.ps1` (add `-ResetTailscale -Yes` only if
-  the user wants all `tailscale serve` settings removed).
-- macOS/Linux: `bash uninstall.sh` (or `bash uninstall.sh --reset-tailscale`).
+- Windows: `powershell -ExecutionPolicy Bypass -File uninstall.ps1`
+- macOS/Linux: `bash uninstall.sh`
 - Docker: `docker compose down`.
 Ask before deleting the project folder: its `data/` folder holds the history, sessions and push keys.
