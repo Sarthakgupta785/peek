@@ -236,10 +236,11 @@ def run():
         time.sleep(delay)
 
     monitor.start_all()
-    from pcguardian import examguard, intruder, tunnel
+    from pcguardian import examguard, intruder, notice, tunnel
     tunnel.start()
     intruder.start()
     examguard.start()
+    notice.start()
     log.info("Peek %s on %s listening on http://%s:%s", __import__("pcguardian").__version__,
              platform.NAME, cfg["host"], cfg["port"])
     server = uvicorn.Server(uvicorn.Config(app, host=cfg["host"], port=cfg["port"],
@@ -264,10 +265,15 @@ def main():
     parser.add_argument("--set-google-app", action="store_true",
                         help="use your own Google OAuth app so ngrok's sign-in screen says Peek")
     parser.add_argument("--clear-google-app", action="store_true", help="go back to ngrok's Google app")
+    parser.add_argument("--show-notice", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--setup-remote", action="store_true", help="guided ngrok remote-access setup")
     parser.add_argument("--check-permissions", action="store_true", help="macOS: open the Privacy settings Peek needs")
     args = parser.parse_args()
     os.chdir(config.ROOT)
+    if args.show_notice:
+        from pcguardian import notice
+        print(notice.show())
+        return 0
     if args.setup_remote:
         return setup_remote()
     if args.check_permissions:

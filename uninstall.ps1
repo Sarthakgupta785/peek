@@ -10,6 +10,9 @@ foreach ($taskName in @("Peek", "PC Guardian")) {   # "PC Guardian" = name befor
     }
 }
 
+# Remove Peek's notification identity.
+Remove-Item -Path "HKCU:\Software\Classes\AppUserModelId\Peek.Monitor" -Recurse -ErrorAction SilentlyContinue
+
 # Stop a copy that is still running.
 Get-CimInstance Win32_Process -Filter "Name='pythonw.exe' OR Name='python.exe'" |
     Where-Object { $_.CommandLine -like "*guardian.py*" } |

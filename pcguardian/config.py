@@ -28,6 +28,7 @@ DEFAULTS = {
     "events_retention_days": 180,
     "push_contact": "mailto:pc-guardian@example.com",
     "session_days": 30,                     # how long a device stays logged in
+    "startup_notice": True,                 # show "this PC is monitored" after sign-in
     "intruder_photos": True,                # webcam photo on a wrong Windows password (Windows)
     "ngrok": {"enabled": False, "url": "", "allowed_emails": [], "exe": ""},
 }

@@ -187,6 +187,7 @@ This file is created on the first run. Edit it, then restart Peek. On Windows, r
 | `process_poll_seconds` | `3` | How often watched apps are checked |
 | `startup_delay_seconds` | `20` | Wait time after boot before monitoring starts |
 | `metrics_retention_days` / `events_retention_days` | `30` / `180` | How long history is kept |
+| `startup_notice` | `true` | Shows "This PC is monitored" after sign-in (never during an exam app) |
 | `push_contact` | `mailto:pc-guardian@example.com` | Contact sent to push services (VAPID). Your own email is fine |
 
 **How app names match:** `whatsapp` matches `WhatsApp.exe` and `WhatsApp.Root.exe`. `chrome`
